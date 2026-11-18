@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { login } from "@/actions/auth";
+import { Button, Input, Card, Label } from "@/components"
 
 export default function LoginPage() {
 
@@ -20,7 +21,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
 
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
+      <Card>
 
         <h1 className="text-2xl font-bold mb-6 text-center">
           Login
@@ -30,11 +31,11 @@ export default function LoginPage() {
         <form action={handleLogin} className="space-y-4">
 
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <Label>
               Email
-            </label>
+            </Label>
 
-            <input
+            <Input
               name="email"
               type="email"
               placeholder="Email"
@@ -53,11 +54,11 @@ export default function LoginPage() {
 
 
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <Label>
               Password
-            </label>
+            </Label>
 
-            <input
+            <Input
               name="password"
               type="password"
               placeholder="Password"
@@ -82,24 +83,18 @@ export default function LoginPage() {
           )}
 
 
-          <button
+          <Button
             type="submit"
             className="
               w-full
-              bg-blue-600
-              text-white
-              py-2
-              rounded-md
-              hover:bg-blue-700
-              transition
             "
           >
             Login
-          </button>
+          </Button>
 
         </form>
 
-      </div>
+      </Card>
 
     </div>
   );

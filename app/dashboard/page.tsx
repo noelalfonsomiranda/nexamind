@@ -1,19 +1,51 @@
-import { getCurrentUser } from "@/lib/auth";
+import {
+  Card,
+  PageHeader,
+} from "@/components";
 
-export default async function DashboardPage(){
-  const user = await getCurrentUser();
-
+export default async function DashboardPage() {
   return (
-    <div>
-      <h1>
-        Hello {user.name}
-      </h1>
-      <p>
-        Email: {user.email}
-      </p>
-      <p>
-        Role: {user.role}
-      </p>
-    </div>
+    <>
+      <PageHeader
+        title="Dashboard"
+        description="Overview of your NexaMind workspace."
+      />
+
+      <div className="grid gap-6 md:grid-cols-3">
+
+        <Card>
+          <h3 className="font-medium">
+            Documents
+          </h3>
+
+          <p className="mt-2 text-3xl font-bold">
+            24
+          </p>
+        </Card>
+
+
+        <Card>
+          <h3 className="font-medium">
+            AI Conversations
+          </h3>
+
+          <p className="mt-2 text-3xl font-bold">
+            128
+          </p>
+        </Card>
+
+
+        <Card>
+          <h3 className="font-medium">
+            AI Agents
+          </h3>
+
+          <p className="mt-2 text-3xl font-bold">
+            5
+          </p>
+        </Card>
+
+      </div>
+    </>
   );
 }

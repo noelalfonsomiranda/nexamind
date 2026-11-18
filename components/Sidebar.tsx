@@ -1,6 +1,6 @@
-import NavLink from './NavLink'
+import { NavLink } from './NavLink'
 
-export default function Sidebar() {
+export function Sidebar() {
   return (
     <aside className="w-64 min-h-screen border-r p-5">
 
@@ -15,6 +15,18 @@ export default function Sidebar() {
 
         <NavLink href="/dashboard/profile">
           Profile
+        </NavLink>
+
+        <NavLink href="/dashboard/documents">
+          Documents
+        </NavLink>
+
+        <NavLink href="/dashboard/ai-chat">
+          AI Chat
+        </NavLink>
+
+        <NavLink href="/dashboard/agents">
+          Agents
         </NavLink>
 
         <NavLink href="/dashboard/settings">
