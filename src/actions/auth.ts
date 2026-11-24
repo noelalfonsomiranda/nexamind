@@ -1,12 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { registerSchema } from "@/lib/validation";
-import { verifyPassword } from "@/lib/password";
+import { createSession } from "@/lib/auth";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+
 
 export async function register(formData: FormData) {
   const parsed = registerSchema.safeParse({
@@ -38,11 +39,12 @@ export async function register(formData: FormData) {
   }
 
   const passwordHash = await hashPassword(password);
-  
+
   const slug = `${name
-  .toLowerCase()
-  .trim()
-  .replace(/\s+/g, "-")}-${crypto.randomUUID().slice(0, 8)}`;
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")}-${crypto.randomUUID().slice(0, 8)}`;
+
 
   const organization = await prisma.organization.create({
     data: {
@@ -50,6 +52,7 @@ export async function register(formData: FormData) {
       slug,
     },
   });
+
 
   const user = await prisma.user.create({
     data: {
@@ -59,6 +62,7 @@ export async function register(formData: FormData) {
     },
   });
 
+
   await prisma.organizationMember.create({
     data: {
       userId: user.id,
@@ -67,14 +71,17 @@ export async function register(formData: FormData) {
     },
   });
 
+
   return {
     success: true,
   };
 }
 
+
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+
 
   if (!email || !password) {
     return {
@@ -83,11 +90,13 @@ export async function login(formData: FormData) {
     };
   }
 
+
   const user = await prisma.user.findUnique({
     where: {
       email: email.toLowerCase(),
     },
   });
+
 
   if (!user) {
     return {
@@ -96,10 +105,12 @@ export async function login(formData: FormData) {
     };
   }
 
+
   const isPasswordValid = await verifyPassword(
     password,
     user.passwordHash
   );
+
 
   if (!isPasswordValid) {
     return {
@@ -108,10 +119,28 @@ export async function login(formData: FormData) {
     };
   }
 
-  return {
-    success: true,
-  };
+
+  // Create session
+  const token = await createSession(user.id);
+
+  const cookieStore = await cookies();
+
+
+  cookieStore.set("session", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  maxAge: 60 * 60 * 24 * 7,
+  path: "/",
+});
+
+console.log("SESSION CREATED:", token);
+
+return {
+  success: true,
+};
 }
+
 
 export async function logout() {
   const cookieStore = await cookies();

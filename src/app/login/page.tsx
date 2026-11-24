@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
+
 import { login } from "@/actions/auth";
 import { Button, Input, Card, Label } from "@/components";
 
@@ -12,13 +13,26 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
 
-  async function handleLogin(formData: FormData) {
+  const router = useRouter();
+
+  async function handleLogin(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
+    e.preventDefault();
+
     setError("");
+
+    const formData = new FormData(e.currentTarget);
 
     const result = await login(formData);
 
     if (result?.error) {
       setError(result.error);
+      return;
+    }
+
+    if (result?.success) {
+      router.push("/dashboard");
     }
   }
 
@@ -28,14 +42,17 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold mb-6 text-center">
           Login
         </h1>
-        
+
         {registered && (
           <p className="mb-4 text-sm text-green-600 text-center">
             Registration successful. You can now login.
           </p>
         )}
 
-        <form action={handleLogin} className="space-y-4">
+        <form
+          onSubmit={handleLogin}
+          className="space-y-4"
+        >
           <div>
             <Label>
               Email
@@ -45,6 +62,7 @@ export default function LoginPage() {
               name="email"
               type="email"
               placeholder="Email"
+              required
               className="
                 w-full
                 border
@@ -67,6 +85,7 @@ export default function LoginPage() {
               name="password"
               type="password"
               placeholder="Password"
+              required
               className="
                 w-full
                 border

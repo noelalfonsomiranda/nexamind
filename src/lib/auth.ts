@@ -1,22 +1,66 @@
 import { cookies } from "next/headers";
+import { jwtVerify, SignJWT } from "jose";
+import { prisma } from "@/lib/prisma";
+
+const secret = new TextEncoder().encode(
+  process.env.AUTH_SECRET
+);
+
+
+export async function createSession(userId: string) {
+  return await new SignJWT({
+    userId,
+  })
+    .setProtectedHeader({
+      alg: "HS256",
+    })
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(secret);
+}
+
+
+export async function verifySession(token: string) {
+  try {
+    const { payload } = await jwtVerify(
+      token,
+      secret
+    );
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 
 export async function getCurrentUser() {
-
   const cookieStore = await cookies();
 
-  const session =
-    cookieStore.get("session");
+  const token = cookieStore.get("session")?.value;
 
-  if (!session) {
-    throw new Error("Unauthorized");
+  if (!token) {
+    return null;
   }
 
-  // temporary user
-  // later this will come from PostgreSQL
-  return {
-    id: 1,
-    name: "Noel",
-    email: "admin@test.com",
-    role: "admin",
-  };
+  const session = await verifySession(token);
+
+  if (!session?.userId) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: session.userId as string,
+    },
+    include: {
+      memberships: {
+        include: {
+          organization: true,
+        },
+      },
+    },
+  });
+
+  return user;
 }
