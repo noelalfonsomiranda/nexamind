@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//
+// Users
+//
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  name         String?
+  passwordHash String?
+  avatarUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships   OrganizationMember[]
+  documents     Document[]
+  conversations Conversation[]
+  messages      Message[]
+  agents        Agent[]
+}
+
+//
+// Organizations (Multi-tenant SaaS)
+//
+
+model Organization {
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members       OrganizationMember[]
+  documents     Document[]
+  agents        Agent[]
+  conversations Conversation[]
+}
+
+model OrganizationMember {
+  id String @id @default(cuid())
+
+  userId         String
+  organizationId String
+
+  role String @default("MEMBER")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, organizationId])
+}
+
+//
+// Documents
+//
+
+model Document {
+  id String @id @default(cuid())
+
+  title    String
+  fileName String
+  fileUrl  String
+
+  mimeType String
+  fileSize Int?
+
+  uploadedById   String
+  organizationId String
+
+  uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  chunks DocumentChunk[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+//
+// Document chunks (RAG / embeddings)
+//
+
+model DocumentChunk {
+  id String @id @default(cuid())
+
+  documentId String
+
+  content String
+
+  // Future pgvector reference
+  embeddingId String?
+
+  chunkIndex Int
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([documentId])
+}
+
+//
+// AI Agents
+//
+
+model Agent {
+  id String @id @default(cuid())
+
+  name        String
+  description String?
+
+  systemPrompt String
+
+  createdById    String
+  organizationId String
+
+  createdBy    User         @relation(fields: [createdById], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  conversations Conversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+//
+// AI Conversations
+//
+
+model Conversation {
+  id String @id @default(cuid())
+
+  title String?
+
+  userId         String
+  organizationId String
+  agentId        String?
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        Agent?       @relation(fields: [agentId], references: [id])
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+//
+// Chat Messages
+//
+
+model Message {
+  id String @id @default(cuid())
+
+  conversationId String
+  userId         String?
+
+  role    String
+  content String
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+}
